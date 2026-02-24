@@ -1,0 +1,1448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BOM Cost Calculator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%); min-height: 100vh; color: #1a1a2e; }
+        .hidden { display: none !important; }
+        .login-container { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; background-color: rgb(45, 64, 105); }
+        .login-bg-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; background-repeat: no-repeat; background-position: center; z-index: 0; }
+        .login-form-section { display: flex; flex-direction: column; justify-content: center; align-items: flex-end; position: relative; z-index: 10; width: 100%; padding: 30px; padding-right: 5%; }
+        .login-card { background: rgba(20, 30, 60, 0.75); border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4); width: 100%; max-width: 400px; overflow: hidden; animation: slideUp 0.7s ease-out; backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.15); transition: all 0.7s ease; }
+        .login-card:hover { transform: translateY(-4px); }
+        .login-card-gradient-bar { height: 4px; background: linear-gradient(to right, #60a5fa, #818cf8, #c084fc); }
+        .login-card-content { padding: 24px; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        .login-icon-container { display: flex; justify-content: center; margin-bottom: 16px; }
+        .login-icon-wrapper { background: rgba(230, 219, 219, 0.1); backdrop-filter: blur(16px); border-radius: 50%; padding: 16px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border: 1px solid rgba(255, 255, 255, 0.2); }
+        .login-icon-wrapper svg { width: 48px; height: 48px; color: white; }
+        .login-header { margin-bottom: 16px; text-align: center; }
+        .login-header h1 { font-size: 24px; font-weight: 700; background: linear-gradient(to right, #ffffff, #e2e8f0, #cbd5e1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 4px; }
+        .login-header p { color: #94a3b8; font-size: 12px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 12px; font-weight: 500; color: #e5e7eb; margin-bottom: 6px; margin-left: 4px; }
+        .input-wrapper { position: relative; }
+        .input-wrapper svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: #22d3ee; transition: color 0.2s ease; }
+        .input-wrapper:focus-within svg { color: #67e8f9; }
+        .form-group input { width: 100%; padding: 10px 12px 10px 40px; border: 2px solid rgba(255, 255, 255, 0.08); border-radius: 8px; font-size: 14px; transition: all 0.2s ease; background: rgba(15, 23, 42, 0.5); color: #f1f5f9; }
+        .form-group input::placeholder { color: #64748b; }
+        .form-group input:focus { outline: none; border-color: transparent; background: rgba(15, 23, 42, 0.6); box-shadow: 0 0 0 2px #60a5fa; }
+        .form-group input:hover { border-color: rgba(255, 255, 255, 0.15); }
+        .password-toggle { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 0; color: #9ca3af; transition: color 0.2s ease; display: flex; align-items: center; justify-content: center; }
+        .password-toggle:hover { color: #60a5fa; }
+        .password-toggle svg { position: static; transform: none; width: 16px; height: 16px; }
+        .form-options { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding-top: 4px; }
+        .remember-me { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+        .remember-me input[type="checkbox"] { width: 14px; height: 14px; accent-color: #818cf8; cursor: pointer; }
+        .remember-me label { font-size: 12px; color: #94a3b8; cursor: pointer; }
+        .forgot-password { font-size: 12px; color: #60a5fa; text-decoration: none; transition: color 0.2s ease; }
+        .forgot-password:hover { color: #818cf8; }
+        .login-btn { width: 100%; padding: 12px; background: linear-gradient(to right, #3b82f6, #6366f1, #8b5cf6); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .login-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.5); background: linear-gradient(to right, #2563eb, #4f46e5, #7c3aed); }
+        .login-btn:active { transform: scale(0.98); }
+        .login-btn svg { width: 20px; height: 20px; transition: transform 0.2s ease; }
+        .login-btn:hover svg { transform: translateX(4px); }
+        .login-footer { position: absolute; bottom: 16px; left: 0; right: 0; text-align: center; color: #64748b; font-size: 12px; z-index: 10; }
+        .login-error { background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #fca5a5; padding: 12px 16px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; display: none; align-items: center; gap: 8px; animation: shake 0.4s ease; }
+        .login-error.show { display: flex; }
+        .login-error svg { width: 18px; height: 18px; flex-shrink: 0; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-5px); } 40%, 80% { transform: translateX(5px); } }
+        .dashboard-container { min-height: 100vh; background: #f8fafc; }
+        .dashboard-header { background: #020629; padding: 20px 40px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+        .dashboard-logo { display: flex; align-items: center; gap: 12px; }
+        .dashboard-logo img { width: 50px; height: 50px; object-fit: contain; border-radius: 8px; }
+        .dashboard-logo h1 { font-size: 20px; font-weight: 700; color: #1a1a2e; }
+        .nav-tabs { display: flex; gap: 8px; background: #f1f5f9; padding: 6px; border-radius: 12px; position: relative; }
+        .nav-tab { padding: 10px 24px; border: none; background: transparent; color: #64748b; font-size: 14px; font-weight: 500; cursor: pointer; border-radius: 8px; transition: all 0.3s ease; position: relative; overflow: visible; }
+        .nav-tab:hover { color: #1a1a2e; background: rgba(102, 126, 234, 0.15); transform: translateY(-2px); }
+        .nav-tab.active { background: linear-gradient(135deg, #1a1a2e 0%, #2d3a5c 100%); color: #fff; box-shadow: 0 4px 15px rgba(26, 26, 46, 0.4); }
+        .nav-tab.active:hover { background: linear-gradient(135deg, #1a1a2e 0%, #2d3a5c 100%); transform: translateY(-2px); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .user-info { display: flex; align-items: center; gap: 12px; }
+        .profile-dropdown-container { position: relative; display: flex; align-items: center; }
+        .profile-btn { background: transparent !important; border: none !important; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; border-radius: 50%; }
+        .profile-avatar { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; }
+        .profile-avatar svg { width: 20px; height: 20px; color: white; }
+        .profile-dropdown { position: absolute; top: calc(100% + 12px); right: 0; background: #fff; border-radius: 16px; box-shadow: 0 20px 40px -8px rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.05); min-width: 220px; display: none; z-index: 1000; overflow: hidden; transform-origin: top right; animation: dropdown-appear 0.25s ease-out; }
+        @keyframes dropdown-appear { from { opacity: 0; transform: translateY(-10px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        .profile-dropdown.show { display: block; }
+        .profile-dropdown-header { padding: 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-align: center; }
+        .profile-dropdown-header h4 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+        .profile-dropdown-header p { font-size: 12px; opacity: 0.9; }
+        .profile-dropdown-item { padding: 14px 18px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 12px; font-size: 14px; color: #374151; border-bottom: 1px solid #f1f5f9; }
+        .profile-dropdown-item:last-child { border-bottom: none; }
+        .profile-dropdown-item:hover { background: linear-gradient(135deg, #f0f4ff 0%, #e8eeff 100%); color: #667eea; padding-left: 22px; }
+        .profile-dropdown-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+        .profile-dropdown-item.logout-item { color: #dc2626; background: transparent; }
+        .profile-dropdown-item.logout-item:hover { background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); color: #dc2626; padding-left: 22px; }
+        .profile-dropdown-divider { height: 1px; background: #e2e8f0; margin: 4px 0; }
+        .dashboard-content { padding: 40px; max-width: 1400px; margin: 0 auto; }
+        .welcome-banner { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; padding: 40px; color: white; margin-bottom: 40px; }
+        .welcome-banner h2 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 24px; margin-bottom: 40px; }
+        .dashboard-card { background: #fff; border-radius: 16px; padding: 28px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: all 0.3s ease; }
+        .dashboard-card:hover { box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
+        .card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+        .card-icon { width: 48px; height: 48px; background: #f0f4ff; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+        .card-icon svg { width: 24px; height: 24px; color: #667eea; }
+        .card-title { font-size: 18px; font-weight: 600; color: #1a1a2e; }
+        .upload-area { border: 2px dashed #e5e7eb; border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; transition: all 0.3s ease; background: #f9fafb; }
+        .upload-area:hover { border-color: #667eea; background: #f0f4ff; }
+        .upload-area.dragover { border-color: #667eea; background: #e8eeff; }
+        .upload-icon { width: 60px; height: 60px; background: #f0f4ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+        .upload-icon svg { width: 30px; height: 30px; color: #667eea; }
+        .upload-text { font-size: 15px; color: #374151; margin-bottom: 8px; }
+        .upload-hint { font-size: 13px; color: #9ca3af; }
+        .file-input { display: none; }
+        .file-list { margin-top: 20px; }
+        .file-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #f0fdf4; border-radius: 8px; margin-bottom: 8px; }
+        .file-item-info { display: flex; align-items: center; gap: 12px; }
+        .file-item-icon { width: 32px; height: 32px; background: #dcfce7; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+        .file-item-icon svg { width: 18px; height: 18px; color: #16a34a; }
+        .file-item-name { font-size: 14px; font-weight: 500; color: #1a1a2e; }
+        .file-item-size { font-size: 12px; color: #6b7280; }
+        .remove-file-btn { background: none; border: none; cursor: pointer; padding: 4px; color: #9ca3af; transition: color 0.3s; }
+        .remove-file-btn:hover { color: #dc2626; }
+        .template-download { margin-top: 20px; }
+        .template-btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; background: #f0f4ff; color: #667eea; border: 1px solid #e0e7ff; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.3s ease; }
+        .template-btn:hover { background: #e8eeff; border-color: #667eea; }
+        .template-btn svg { width: 18px; height: 18px; }
+        
+        /* File Count Badge */
+        .file-count-badge { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 20px; font-size: 13px; font-weight: 600; margin-left: 16px; }
+        .file-count-badge svg { width: 16px; height: 16px; }
+        .file-count-badge.limit-reached { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+        
+        /* Multiple File List */
+        .uploaded-files-container { margin-top: 20px; }
+        .uploaded-files-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        .uploaded-files-header h4 { font-size: 14px; font-weight: 600; color: #1a1a2e; }
+        .uploaded-files-list { max-height: 250px; overflow-y: auto; }
+        .uploaded-file-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #f8fafc; border-radius: 8px; margin-bottom: 8px; border: 1px solid #e2e8f0; transition: all 0.2s ease; }
+        .uploaded-file-item:hover { border-color: #667eea; background: #f0f4ff; }
+        .uploaded-file-item.active { border-color: #667eea; background: #e8eeff; }
+        .uploaded-file-info { display: flex; align-items: center; gap: 12px; }
+        .uploaded-file-icon { width: 36px; height: 36px; background: #667eea; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+        .uploaded-file-icon svg { width: 18px; height: 18px; color: white; }
+        .uploaded-file-details { display: flex; flex-direction: column; }
+        .uploaded-file-name { font-size: 14px; font-weight: 500; color: #1a1a2e; }
+        .uploaded-file-meta { font-size: 12px; color: #64748b; }
+        .uploaded-file-actions { display: flex; gap: 8px; }
+        .file-action-btn { background: none; border: none; cursor: pointer; padding: 6px; border-radius: 6px; transition: all 0.2s ease; }
+        .file-action-btn:hover { background: rgba(102, 126, 234, 0.1); }
+        .file-action-btn.delete:hover { background: rgba(239, 68, 68, 0.1); }
+        .file-action-btn.delete:hover svg { color: #dc2626; }
+        .file-action-btn svg { width: 18px; height: 18px; color: #64748b; }
+        
+        /* Add File Button */
+        .add-file-btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; margin-top: 16px; }
+        .add-file-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px -4px rgba(16, 185, 129, 0.4); }
+        .add-file-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .add-file-btn svg { width: 18px; height: 18px; }
+        
+        /* Empty File State */
+        .empty-files-state { text-align: center; padding: 30px; color: #64748b; }
+        .empty-files-state svg { width: 48px; height: 48px; color: #d1d5db; margin-bottom: 12px; }
+        .empty-files-state p { font-size: 14px; }
+        .part-id-input-group { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+        .part-id-input-group input { flex: 1; min-width: 200px; padding: 14px 16px; border: 2px solid #e5e7eb; border-radius: 12px; font-size: 15px; transition: all 0.3s ease; background: #f9fafb; }
+        .part-id-input-group input:focus { outline: none; border-color: #667eea; background: #fff; box-shadow: 0 0 0 4px rgba(102,126,234,0.1); }
+        .part-id-input-group input.error { border-color: #ef4444; box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1); }
+        .button-group { display: flex; gap: 12px; flex-wrap: wrap; }
+        .bom-cost-btn, .view-details-btn { padding: 14px 28px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px; }
+        .bom-cost-btn:hover, .view-details-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(102,126,234,0.4); }
+        .bom-cost-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .bom-cost-btn svg, .view-details-btn svg { width: 20px; height: 20px; }
+        .view-details-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .view-details-btn.active { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+        .part-number-error { color: #ef4444; font-size: 12px; margin-top: 4px; display: none; }
+        .part-number-error.show { display: block; }
+        .currency-display { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 24px; }
+        .currency-card { background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 12px; padding: 20px; text-align: center; border: 1px solid #e2e8f0; transition: all 0.3s ease; }
+        .currency-card:hover { transform: translateY(-4px); box-shadow: 0 10px 20px -5px rgba(0,0,0,0.1); }
+        .currency-flag { font-size: 24px; margin-bottom: 8px; }
+        .currency-label { font-size: 13px; color: #64748b; font-weight: 500; margin-bottom: 4px; }
+        .currency-value { font-size: 24px; font-weight: 700; color: #1a1a2e; }
+        .currency-value.inr { color: #f59e0b; }
+        .currency-value.usd { color: #10b981; }
+        .currency-value.eur { color: #3b82f6; }
+        .currency-value.gbp { color: #8b5cf6; }
+        .detailed-options-container { margin-top: 24px; padding: 20px; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 16px; border: 1px solid #e2e8f0; display: none; animation: slideDown 0.3s ease-out; }
+        .detailed-options-container.show { display: block; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .detailed-options-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #e2e8f0; }
+        .detailed-options-header h4 { font-size: 16px; font-weight: 600; color: #1a1a2e; display: flex; align-items: center; gap: 8px; }
+        .detailed-options-header h4 svg { width: 20px; height: 20px; color: #667eea; }
+        .detailed-option-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: white; border-radius: 10px; margin-bottom: 10px; border: 1px solid #e5e7eb; }
+        .detailed-option-item:hover { border-color: #667eea; box-shadow: 0 2px 8px rgba(102,126,234,0.1); }
+        .detailed-option-label { font-size: 14px; color: #64748b; font-weight: 500; }
+        .detailed-option-value { font-size: 14px; font-weight: 600; color: #1a1a2e; }
+        .detailed-option-value.highlight { color: #667eea; }
+        .close-details-btn { background: #fee2e2; color: #dc2626; border: none; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+        .close-details-btn:hover { background: #fecaca; }
+        .close-details-btn svg { width: 16px; height: 16px; }
+        .download-btn { padding: 10px 20px; background: #10b981; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.3s ease; }
+        .download-btn:hover { background: #059669; transform: translateY(-2px); }
+        .download-btn svg { width: 18px; height: 18px; }
+        .empty-state { text-align: center; padding: 40px; color: #6b7280; }
+        .empty-state svg { width: 64px; height: 64px; color: #d1d5db; margin-bottom: 16px; }
+        .empty-state h3 { font-size: 18px; font-weight: 600; color: #374151; margin-bottom: 8px; }
+        .empty-state p { font-size: 14px; }
+        .success-message { position: fixed; top: 20px; right: 20px; background: #10b981; color: white; padding: 16px 24px; border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(16,185,129,0.4); display: flex; align-items: center; gap: 12px; transform: translateX(150%); transition: transform 0.3s ease; z-index: 1001; }
+        .success-message.show { transform: translateX(0); }
+        .success-message svg { width: 24px; height: 24px; }
+        .part-number-display { background: #f0f4ff; padding: 12px 16px; border-radius: 10px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px; }
+        .part-number-display .label { font-size: 13px; color: #64748b; font-weight: 500; }
+        .part-number-display .value { font-size: 16px; font-weight: 700; color: #667eea; font-family: monospace; }
+        @media (max-width: 768px) { .login-container { flex-direction: column; } .login-form-section { max-width: 100%; } .form-group input { min-width: 250px; } .dashboard-header { padding: 15px 20px; flex-direction: column; gap: 15px; } .dashboard-content { padding: 20px; } .dashboard-grid { grid-template-columns: 1fr; } .currency-display { grid-template-columns: 1fr; } .part-id-input-group { flex-direction: column; } .bom-cost-btn { width: 100%; justify-content: center; } .button-group { flex-direction: column; } .button-group button { width: 100%; justify-content: center; } }
+        
+        /* Missing Details Modal Styles */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.3s ease; }
+        .modal-overlay.show { opacity: 1; visibility: visible; }
+        .modal-container { background: white; border-radius: 16px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; transform: scale(0.9) translateY(20px); transition: all 0.3s ease; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
+        .modal-overlay.show .modal-container { transform: scale(1) translateY(0); }
+        .modal-header { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 20px 24px; border-radius: 16px 16px 0 0; display: flex; align-items: center; gap: 12px; }
+        .modal-header svg { width: 28px; height: 28px; }
+        .modal-header h3 { font-size: 18px; font-weight: 600; }
+        .modal-body { padding: 24px; }
+        .modal-alert { background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; padding: 14px 16px; margin-bottom: 20px; display: flex; align-items: flex-start; gap: 10px; }
+        .modal-alert svg { width: 20px; height: 20px; color: #dc2626; flex-shrink: 0; margin-top: 2px; }
+        .modal-alert p { color: #b91c1c; font-size: 14px; line-height: 1.5; }
+        .attribute-input-group { margin-bottom: 16px; }
+        .attribute-input-group label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 8px; }
+        .attribute-input-group label span { color: #dc2626; }
+        .attribute-input-group input, .attribute-input-group select { width: 100%; padding: 12px 14px; border: 2px solid #e5e7eb; border-radius: 10px; font-size: 14px; transition: all 0.2s ease; background: #f9fafb; }
+        .attribute-input-group input:focus, .attribute-input-group select:focus { outline: none; border-color: #667eea; background: white; box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1); }
+        .attribute-input-group input.error { border-color: #ef4444; box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1); }
+        .modal-footer { padding: 16px 24px; border-top: 1px solid #e5e7eb; display: flex; justify-content: flex-end; gap: 12px; }
+        .modal-btn { padding: 12px 24px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 8px; }
+        .modal-btn svg { width: 18px; height: 18px; }
+        .modal-btn-cancel { background: #f3f4f6; border: none; color: #374151; }
+        .modal-btn-cancel:hover { background: #e5e7eb; }
+        .modal-btn-submit { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; color: white; }
+        .modal-btn-submit:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(102, 126, 234, 0.4); }
+        .modal-btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        
+        /* Profile Modal Styles */
+        .profile-modal-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 24px; border-radius: 16px 16px 0 0; display: flex; align-items: center; gap: 16px; }
+        .profile-modal-header svg { width: 48px; height: 48px; }
+        .profile-modal-header h3 { font-size: 20px; font-weight: 600; }
+        .profile-modal-body { padding: 24px; }
+        .profile-info-item { display: flex; align-items: center; padding: 16px; background: #f8fafc; border-radius: 12px; margin-bottom: 12px; border: 1px solid #e2e8f0; }
+        .profile-info-item:last-child { margin-bottom: 0; }
+        .profile-info-icon { width: 44px; height: 44px; background: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-right: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .profile-info-icon svg { width: 22px; height: 22px; color: #667eea; }
+        .profile-info-content { flex: 1; }
+        .profile-info-label { font-size: 12px; color: #64748b; font-weight: 500; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .profile-info-value { font-size: 15px; font-weight: 600; color: #1a1a2e; }
+        .profile-back-btn { display: flex; align-items: center; gap: 8px; padding: 12px 20px; background: #f3f4f6; color: #374151; border: none; border-radius: 10px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s ease; margin-top: 20px; width: 100%; justify-content: center; }
+        .profile-back-btn:hover { background: #e5e7eb; }
+        .profile-back-btn svg { width: 18px; height: 18px; }
+    </style>
+</head>
+<body>
+
+    <div id="loginPage" class="login-container">
+        <img src="ChatGPT Image Feb 18, 2026, 08_53_31 AM.png" alt="Login Background" class="login-bg-image">
+        <div class="login-form-section">
+            <div class="login-card">
+                <div class="login-card-gradient-bar"></div>
+                <div class="login-card-content">
+                    <div class="login-icon-container">
+                        <div class="login-icon-wrapper"><svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg></div>
+                    </div>
+                    <div class="login-header"><h1>BOM Cost Calculator</h1><p>Sign in to access your account</p></div>
+                    <div class="login-error" id="loginError"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><span id="errorMessage">Invalid username or password</span></div>
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <label for="username">User ID</label>
+                            <div class="input-wrapper">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
+                                <input type="text" id="username" placeholder="Enter your user ID" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <div class="input-wrapper">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path></svg>
+                                <input type="password" id="password" placeholder="Enter your password" required>
+                                <button type="button" class="password-toggle" id="passwordToggle"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg></button>
+                            </div>
+                        </div>
+                        <div class="form-options">
+                            <div class="remember-me"><input type="checkbox" id="remember-me"><label for="remember-me">Remember me</label></div>
+                            <a href="#" class="forgot-password">Forgot password?</a>
+                        </div>
+                        <button type="submit" class="login-btn"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>Sign in</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <footer class="login-footer"><p>2026 All Rights Reserved by Tata</p></footer>
+    </div>
+
+    <div id="dashboardPage" class="dashboard-container hidden">
+        <header class="dashboard-header">
+            <div class="dashboard-logo"><img src="TASL logo.png" style="width:150px;height:50px;border-radius:0;"></div>
+            <div class="nav-tabs">
+                <button class="nav-tab active" data-tab="bom">BOM Calculator</button>
+                <button class="nav-tab" data-tab="upload">Upload and Template</button>
+            </div>
+            <div class="user-info">
+                <div class="profile-dropdown-container">
+                    <button class="profile-btn" id="profileBtn"><div class="profile-avatar"><svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg></div></button>
+                    <div class="profile-dropdown" id="profileDropdown">
+                        <div class="profile-dropdown-header"><h4>Admin User</h4><p>admin@tata.com</p></div>
+                        <div class="profile-dropdown-divider"></div>
+                        <div class="profile-dropdown-item"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg><span>My Profile</span></div>
+                        <div class="profile-dropdown-divider"></div>
+                        <div class="profile-dropdown-item logout-item" id="logoutBtn"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg><span>Logout</span></div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div id="bom" class="tab-content active">
+            <div class="dashboard-content">
+                <div class="welcome-banner"><h2>BOM Cost Calculator</h2></div>
+                <div class="dashboard-card">
+                    <div class="card-header"><div class="card-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg></div><h3 class="card-title">Calculate BOM Cost</h3></div>
+                    <div class="part-id-input-group">
+                        <input type="text" id="partNumberInput" placeholder="Enter Part Number / Material ID">
+                        <div class="button-group">
+                            <button class="bom-cost-btn" id="bomCostBtn"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>Calculate BOM Cost</button>
+                            <button class="view-details-btn" id="viewDetailsBtn" disabled><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>View Details</button>
+                        </div>
+                    </div>
+                    <div class="part-number-error" id="partNumberError">Please enter a valid part number</div>
+                    <div class="part-number-display hidden" id="partNumberDisplay"><span class="label">Part Number:</span><span class="value" id="displayPartNumber"></span></div>
+                    <div class="currency-display hidden" id="currencyDisplay">
+                        <div class="currency-card"><div class="currency-flag">INDIA</div><div class="currency-label">INR</div><div class="currency-value inr" id="inrValue">0.00</div></div>
+                        <div class="currency-card"><div class="currency-flag">USA</div><div class="currency-label">USD</div><div class="currency-value usd" id="usdValue">0.00</div></div>
+                        <div class="currency-card"><div class="currency-flag">EUROPE</div><div class="currency-label">EUR</div><div class="currency-value eur" id="eurValue">0.00</div></div>
+                        <div class="currency-card"><div class="currency-flag">GREAT BRITAIN</div><div class="currency-label">GBP</div><div class="currency-value gbp" id="gbpValue">0.00</div></div>
+                    </div>
+                    <div class="detailed-options-container" id="detailedOptions">
+                        <div class="detailed-options-header"><h4><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>BOM Details</h4><button class="close-details-btn" id="closeDetailsBtn"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>Close</button></div>
+                        <div id="detailsContent"></div>
+                        <div style="margin-top:16px"><button class="download-btn" id="downloadDetailsBtn"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>Download Data</button></div>
+                    </div>
+                    <div class="empty-state" id="bomEmptyState"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg><h3>No BOM Data</h3></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="upload" class="tab-content">
+            <div class="dashboard-content">
+                <div class="welcome-banner">
+                    <h2>Upload and Template</h2>
+                    <div class="file-count-badge" id="fileCountBadge">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        <span id="fileCountText">0/5 Files</span>
+                    </div>
+                </div>
+                <div class="dashboard-card">
+                    <div class="card-header"><div class="card-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg></div><h3 class="card-title">Upload BOM File</h3></div>
+                    <div class="upload-area" id="uploadArea">
+                        <input type="file" id="fileInput" class="file-input" accept=".xls,.xlsx,.csv">
+                        <div class="upload-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg></div>
+                        <p class="upload-text">Click to upload or drag and drop</p>
+                        <p class="upload-hint">Supports .XLS, .XLSX, .CSV files</p>
+                    </div>
+                    <div class="file-list hidden" id="fileList">
+                        <div class="file-item">
+                            <div class="file-item-info"><div class="file-item-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg></div><div><div class="file-item-name" id="fileName">filename.xlsx</div><div class="file-item-size" id="fileSize">0 KB</div></div></div>
+                            <button class="remove-file-btn" id="removeFileBtn"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+                        </div>
+                    </div>
+                    <!-- Multiple Files Container -->
+                    <div class="uploaded-files-container hidden" id="uploadedFilesContainer">
+                        <div class="uploaded-files-header">
+                            <h4>Uploaded Files</h4>
+                        </div>
+                        <div class="uploaded-files-list" id="uploadedFilesList">
+                            <!-- Files will be listed here dynamically -->
+                        </div>
+                    </div>
+                    
+                    <!-- Add File Button -->
+                    <button class="add-file-btn hidden" id="addFileBtn">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                        Add Another File
+                    </button>
+                    
+                    <div class="template-download"><button class="template-btn" id="downloadTemplateBtn"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>Download Template</button></div>
+                    <div class="empty-state hidden" id="uploadStatus"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><h3>File Uploaded Successfully!</h3></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="success-message" id="successMessage"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><span id="successMessageText">Success!</span></div>
+
+    <!-- Missing Details Modal -->
+    <div class="modal-overlay" id="missingDetailsModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                <h3>Missing Details Required</h3>
+            </div>
+            <div class="modal-body">
+                <div class="modal-alert">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <p>The uploaded file is missing some required attributes. Please provide the details below to calculate BOM cost.</p>
+                </div>
+                <div id="missingAttributesForm"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-cancel" id="cancelMissingDetailsBtn">Cancel</button>
+                <button class="modal-btn modal-btn-submit" id="submitMissingDetailsBtn">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    Submit
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div class="modal-overlay" id="profileModal">
+        <div class="modal-container">
+            <div class="profile-modal-header">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                <h3>My Profile</h3>
+            </div>
+            <div class="profile-modal-body" id="profileModalBody">
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        const API_BASE_URL = window.location.origin + '/api';
+        const EXCHANGE_RATES = { INR: 1, USD: 0.012, EUR: 0.011, GBP: 0.0095 };
+        const REQUIRED_ATTRIBUTES = ['Item', 'Item Description', 'Quantity', 'Part Type', 'Currency'];
+        const MAIN_ATTRIBUTES = ['Item', 'Item Description', 'Quantity', 'Part Type', 'Currency', 'Unit Price', 'Total Price'];
+        const MAX_FILES_PER_USER = 5;
+        let bomDataArray = [], bomData = {}, currentPartNumber = '', currentUser = null, uploadedFileData = null;
+        let uploadedFilesList = []; // Store all uploaded files data
+        let currentFileIndex = -1; // Track current file index
+        let parentPartNumberFromFile = null; // Store parent part number from first item in uploaded file
+
+        function getValueByCaseInsensitiveKey(obj, targetKey) {
+            if (!obj) return null;
+            const keys = Object.keys(obj);
+            for (let key of keys) {
+                if (key.trim().toLowerCase() === targetKey.toLowerCase()) return obj[key];
+            }
+            return null;
+        }
+
+        async function loginAPI(username, password) {
+            try {
+                const response = await fetch(API_BASE_URL + '/users/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await response.json();
+                return response.ok ? { success: true, data } : { success: false, message: data.message || 'Login failed' };
+            } catch (error) {
+                return { success: false, message: 'Network error' };
+            }
+        }
+
+        async function getUserProfileAPI() {
+            const token = localStorage.getItem('token');
+            try {
+                const response = await fetch(API_BASE_URL + '/users/me', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                return response.ok ? { success: true, data: await response.json() } : { success: false };
+            } catch (error) {
+                return { success: false };
+            }
+        }
+
+        async function getAllBOMItemsAPI() {
+            const token = localStorage.getItem('token');
+            try {
+                const response = await fetch(API_BASE_URL + '/bom/all', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                return response.ok ? { success: true, data: await response.json() } : { success: false };
+            } catch (error) {
+                return { success: false };
+            }
+        }
+
+        const loginForm = document.getElementById('loginForm');
+        const loginError = document.getElementById('loginError');
+        const errorMessage = document.getElementById('errorMessage');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const rememberMeCheckbox = document.getElementById('remember-me');
+        const passwordToggle = document.getElementById('passwordToggle');
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            const savedUsername = localStorage.getItem('savedUsername');
+            const savedPassword = localStorage.getItem('savedPassword');
+            const rememberMe = localStorage.getItem('rememberMe');
+            const token = localStorage.getItem('token');
+
+            if (rememberMe === 'true' && savedUsername && savedPassword) {
+                usernameInput.value = savedUsername;
+                passwordInput.value = savedPassword;
+                rememberMeCheckbox.checked = true;
+            }
+
+            if (token) {
+                const result = await getUserProfileAPI();
+                if (result.success) {
+                    currentUser = result.data;
+                    document.getElementById('loginPage').classList.add('hidden');
+                    document.getElementById('dashboardPage').classList.remove('hidden');
+                    updateProfileDropdown();
+                    loadBOMData();
+                } else {
+                    localStorage.removeItem('token');
+                }
+            }
+        });
+
+        loginForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value;
+            const rememberMe = rememberMeCheckbox.checked;
+            const result = await loginAPI(username, password);
+
+            if (result.success) {
+                const token = result.data.token;
+                const _id = result.data._id;
+                const email = result.data.email;
+                const role = result.data.role;
+
+                localStorage.setItem('token', token);
+                localStorage.setItem('userId', _id);
+                localStorage.setItem('userEmail', email);
+                localStorage.setItem('userRole', role);
+
+                currentUser = { _id, username, email, role };
+
+                if (rememberMe) {
+                    localStorage.setItem('savedUsername', username);
+                    localStorage.setItem('savedPassword', password);
+                    localStorage.setItem('rememberMe', 'true');
+                } else {
+                    localStorage.removeItem('savedUsername');
+                    localStorage.removeItem('savedPassword');
+                    localStorage.setItem('rememberMe', 'false');
+                }
+
+                loginError.classList.remove('show');
+                updateProfileDropdown();
+                document.getElementById('loginPage').classList.add('hidden');
+                document.getElementById('dashboardPage').classList.remove('hidden');
+                loadBOMData();
+            } else {
+                loginError.classList.add('show');
+                errorMessage.textContent = result.message || 'Invalid credentials';
+                loginError.style.animation = 'none';
+                loginError.offsetHeight;
+                loginError.style.animation = 'shake 0.4s ease';
+            }
+        });
+
+        function updateProfileDropdown() {
+            if (currentUser) {
+                const header = document.querySelector('.profile-dropdown-header');
+                if (header) header.innerHTML = '<h4>' + currentUser.username + '</h4><p>' + (currentUser.email || currentUser.username + '@tata.com') + '</p>';
+            }
+        }
+
+        usernameInput.addEventListener('input', function() { loginError.classList.remove('show'); });
+        passwordInput.addEventListener('input', function() { loginError.classList.remove('show'); });
+
+        passwordToggle.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            passwordToggle.innerHTML = type === 'text' 
+                ? '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path></svg>'
+                : '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>';
+        });
+
+        const profileBtn = document.getElementById('profileBtn');
+        const profileDropdown = document.getElementById('profileDropdown');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const profileModal = document.getElementById('profileModal');
+        const profileModalBody = document.getElementById('profileModalBody');
+
+        profileBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            profileDropdown.classList.toggle('show');
+        });
+
+        document.addEventListener('click', function() {
+            profileDropdown.classList.remove('show');
+        });
+
+        // My Profile click handler
+        const myProfileItem = document.querySelector('.profile-dropdown-item:not(.logout-item)');
+        if (myProfileItem) {
+            myProfileItem.addEventListener('click', function(e) {
+                e.stopPropagation();
+                profileDropdown.classList.remove('show');
+                showProfileModal();
+            });
+        }
+
+        function showProfileModal() {
+            if (!currentUser) return;
+            
+            const empName = currentUser.empName || currentUser.username || 'N/A';
+            const empId = currentUser.empId || 'N/A';
+            const location = currentUser.location || 'N/A';
+            const email = currentUser.email || 'N/A';
+            const role = currentUser.role || 'N/A';
+
+            profileModalBody.innerHTML = `
+                <div class="profile-info-item">
+                    <div class="profile-info-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                    </div>
+                    <div class="profile-info-content">
+                        <div class="profile-info-label">Employee Name</div>
+                        <div class="profile-info-value">${empName}</div>
+                    </div>
+                </div>
+                <div class="profile-info-item">
+                    <div class="profile-info-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3 3 0 00-3 3v1h6v-1a3 3 0 00-3-3z"></path></svg>
+                    </div>
+                    <div class="profile-info-content">
+                        <div class="profile-info-label">Employee ID</div>
+                        <div class="profile-info-value">${empId}</div>
+                    </div>
+                </div>
+                <div class="profile-info-item">
+                    <div class="profile-info-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    </div>
+                    <div class="profile-info-content">
+                        <div class="profile-info-label">Location</div>
+                        <div class="profile-info-value">${location}</div>
+                    </div>
+                </div>
+                <div class="profile-info-item">
+                    <div class="profile-info-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                    </div>
+                    <div class="profile-info-content">
+                        <div class="profile-info-label">Email</div>
+                        <div class="profile-info-value">${email}</div>
+                    </div>
+                </div>
+                <div class="profile-info-item">
+                    <div class="profile-info-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                    </div>
+                    <div class="profile-info-content">
+                        <div class="profile-info-label">Employee Role</div>
+                        <div class="profile-info-value">${role}</div>
+                    </div>
+                </div>
+                <button class="profile-back-btn" id="backToDashboardBtn">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    Back to Dashboard
+                </button>
+            `;
+            
+            profileModal.classList.add('show');
+            
+            document.getElementById('backToDashboardBtn').addEventListener('click', function() {
+                profileModal.classList.remove('show');
+            });
+        }
+
+        profileModal.addEventListener('click', function(e) {
+            if (e.target === profileModal) {
+                profileModal.classList.remove('show');
+            }
+        });
+
+
+        logoutBtn.addEventListener('click', function() {
+            localStorage.clear();
+            currentUser = null;
+            bomDataArray = [];
+            bomData = {};
+            currentPartNumber = '';
+            uploadedFileData = null;
+            document.getElementById('partNumberInput').value = '';
+            document.getElementById('partNumberDisplay').classList.add('hidden');
+            document.getElementById('currencyDisplay').classList.add('hidden');
+            document.getElementById('detailedOptions').classList.remove('show');
+            document.getElementById('viewDetailsBtn').classList.remove('active');
+            document.getElementById('viewDetailsBtn').disabled = true;
+            document.getElementById('bomEmptyState').classList.remove('hidden');
+            document.getElementById('detailsContent').innerHTML = '';
+            document.getElementById('fileInput').value = '';
+            document.getElementById('fileList').classList.add('hidden');
+            document.getElementById('uploadArea').classList.remove('hidden');
+            document.getElementById('uploadStatus').classList.add('hidden');
+            profileDropdown.classList.remove('show');
+            document.getElementById('dashboardPage').classList.add('hidden');
+            document.getElementById('loginPage').classList.remove('hidden');
+            usernameInput.value = '';
+            passwordInput.value = '';
+        });
+
+        async function loadBOMData() {
+            const result = await getAllBOMItemsAPI();
+            if (result.success && result.data) {
+                // Merge API data with locally uploaded data if any
+                const apiData = result.data;
+                if (uploadedFilesList.length > 0) {
+                    // Combine API data with local uploads, avoiding duplicates
+                    const existingItems = new Set();
+                    uploadedFilesList.forEach(function(f) {
+                        f.data.forEach(function(item) {
+                            const itemValue = getValueByCaseInsensitiveKey(item, 'Item');
+                            if (itemValue) existingItems.add(String(itemValue));
+                        });
+                    });
+                    
+                    // Add API items that don't exist locally
+                    apiData.forEach(function(item) {
+                        const itemValue = getValueByCaseInsensitiveKey(item, 'Item');
+                        if (itemValue && !existingItems.has(String(itemValue))) {
+                            bomDataArray.push(item);
+                        }
+                    });
+                    console.log('BOM data merged:', bomDataArray.length, 'items (local + API)');
+                } else {
+                    bomDataArray = apiData;
+                    console.log('BOM data loaded:', bomDataArray.length, 'items from API');
+                }
+            } else if (uploadedFilesList.length > 0) {
+                // If API call failed but we have local uploads, keep using local data
+                console.log('Using locally uploaded data:', bomDataArray.length, 'items');
+            }
+        }
+
+        const navTabs = document.querySelectorAll('.nav-tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        navTabs.forEach(function(tab) {
+            tab.addEventListener('click', function() {
+                const targetTab = this.getAttribute('data-tab');
+                navTabs.forEach(function(t) { t.classList.remove('active'); });
+                tabContents.forEach(function(c) { c.classList.remove('active'); });
+                this.classList.add('active');
+                document.getElementById(targetTab).classList.add('active');
+            });
+        });
+
+        const partNumberInput = document.getElementById('partNumberInput');
+        const bomCostBtn = document.getElementById('bomCostBtn');
+        const viewDetailsBtn = document.getElementById('viewDetailsBtn');
+        const partNumberError = document.getElementById('partNumberError');
+        const partNumberDisplay = document.getElementById('partNumberDisplay');
+        const displayPartNumber = document.getElementById('displayPartNumber');
+        const currencyDisplay = document.getElementById('currencyDisplay');
+        const detailedOptions = document.getElementById('detailedOptions');
+        const bomEmptyState = document.getElementById('bomEmptyState');
+        const closeDetailsBtn = document.getElementById('closeDetailsBtn');
+        const downloadDetailsBtn = document.getElementById('downloadDetailsBtn');
+
+        function isValidPartNumber(value) {
+            return /^[a-zA-Z0-9]+$/.test(value);
+        }
+
+        partNumberInput.addEventListener('input', function() {
+            const value = this.value.replace(/[^a-zA-Z0-9]/g, '');
+            this.value = value;
+            if (value.length > 0 && !isValidPartNumber(value)) {
+                this.classList.add('error');
+                partNumberError.classList.add('show');
+            } else {
+                this.classList.remove('error');
+                partNumberError.classList.remove('show');
+            }
+        });
+
+        bomCostBtn.addEventListener('click', function() {
+            const partNumber = partNumberInput.value;
+            if (!isValidPartNumber(partNumber)) {
+                partNumberInput.classList.add('error');
+                partNumberError.classList.add('show');
+                return;
+            }
+
+            // Check if file is uploaded
+            if (!bomDataArray || bomDataArray.length === 0) {
+                // Store the part number for later use
+                localStorage.setItem('pendingPartNumber', partNumber);
+                // Redirect to upload tab
+                document.querySelector('.nav-tab[data-tab="upload"]').click();
+                showSuccessMessage('Please upload a BOM file first');
+                return;
+            }
+
+            detailedOptions.classList.remove('show');
+            viewDetailsBtn.classList.remove('active');
+            currentPartNumber = partNumber;
+            let foundData = null;
+
+            if (bomDataArray && bomDataArray.length > 0) {
+                for (let i = 0; i < bomDataArray.length; i++) {
+                    const row = bomDataArray[i];
+                    const itemValue = getValueByCaseInsensitiveKey(row, 'Item');
+                    if (itemValue && String(itemValue) === partNumber) {
+                        foundData = row;
+                        break;
+                    }
+                }
+            }
+
+            if (!foundData && bomData && Object.keys(bomData).length > 0) {
+                const itemValue = getValueByCaseInsensitiveKey(bomData, 'Item');
+                if (itemValue && String(itemValue) === partNumber) foundData = bomData;
+            }
+
+            if (foundData) {
+                bomData = foundData;
+                processBOMData();
+            } else {
+                showSuccessMessage('Part number not found in uploaded file!');
+            }
+        });
+
+
+        viewDetailsBtn.addEventListener('click', function() {
+            const isShown = detailedOptions.classList.contains('show');
+            if (isShown) {
+                detailedOptions.classList.remove('show');
+                this.classList.remove('active');
+            } else {
+                let foundData = null;
+                if (currentPartNumber && bomDataArray && bomDataArray.length > 0) {
+                    for (let i = 0; i < bomDataArray.length; i++) {
+                        const row = bomDataArray[i];
+                        const itemValue = getValueByCaseInsensitiveKey(row, 'Item');
+                        if (itemValue && String(itemValue) === currentPartNumber) {
+                            foundData = row;
+                            break;
+                        }
+                    }
+                }
+
+                if (!foundData && bomData && Object.keys(bomData).length > 0) {
+                    const itemValue = getValueByCaseInsensitiveKey(bomData, 'Item');
+                    if (itemValue && String(itemValue) === currentPartNumber) foundData = bomData;
+                }
+
+                if (foundData) {
+                    bomData = foundData;
+                }
+
+                detailedOptions.classList.add('show');
+                this.classList.add('active');
+                populateDetailsView();
+            }
+        });
+
+        closeDetailsBtn.addEventListener('click', function() {
+            detailedOptions.classList.remove('show');
+            viewDetailsBtn.classList.remove('active');
+        });
+
+        downloadDetailsBtn.addEventListener('click', function() {
+            downloadVisibleData();
+        });
+
+        function processBOMData() {
+            displayPartNumber.textContent = currentPartNumber;
+            partNumberDisplay.classList.remove('hidden');
+            currencyDisplay.classList.remove('hidden');
+            viewDetailsBtn.disabled = false;
+            bomEmptyState.classList.add('hidden');
+
+            const baseCost = bomData['Unit Price'] || 1000;
+            const quantity = bomData['Quantity'] || 1;
+            const totalCost = baseCost * quantity;
+
+            document.getElementById('inrValue').textContent = 'Rs ' + totalCost.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            document.getElementById('usdValue').textContent = '$ ' + (totalCost * EXCHANGE_RATES.USD).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            document.getElementById('eurValue').textContent = '€ ' + (totalCost * EXCHANGE_RATES.EUR).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            document.getElementById('gbpValue').textContent = '£ ' + (totalCost * EXCHANGE_RATES.GBP).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+            showSuccessMessage('BOM Cost calculated successfully!');
+        }
+
+        function populateDetailsView() {
+            const detailsContent = document.getElementById('detailsContent');
+            let html = '';
+            MAIN_ATTRIBUTES.forEach(function(attr) {
+                const value = bomData[attr] || 'N/A';
+                html += '<div class="detailed-option-item"><span class="detailed-option-label">' + attr + '</span><span class="detailed-option-value highlight">' + value + '</span></div>';
+            });
+            detailsContent.innerHTML = html;
+        }
+
+        function downloadVisibleData() {
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += MAIN_ATTRIBUTES.join(",") + "\n";
+            const row = MAIN_ATTRIBUTES.map(function(attr) {
+                const value = bomData[attr] || 'N/A';
+                return '"' + value + '"';
+            });
+            csvContent += row.join(",") + "\n";
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "BOM_Details_" + currentPartNumber + ".csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showSuccessMessage('Data downloaded successfully!');
+        }
+
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const removeFileBtn = document.getElementById('removeFileBtn');
+        const downloadTemplateBtn = document.getElementById('downloadTemplateBtn');
+        const uploadStatus = document.getElementById('uploadStatus');
+
+        uploadArea.addEventListener('click', function() {
+            fileInput.click();
+        });
+
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', function() {
+            this.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) {
+                handleFileUpload(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                handleFileUpload(this.files[0]);
+            }
+        });
+
+        function handleFileUpload(file) {
+            const validExtensions = ['.xls', '.xlsx', '.csv'];
+            const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+
+            if (!validExtensions.includes(fileExtension)) {
+                showSuccessMessage('Invalid file type.');
+                return;
+            }
+
+            // Check if we've reached the max file limit
+            if (uploadedFilesList.length >= MAX_FILES_PER_USER) {
+                showSuccessMessage('Maximum 5 files allowed per user.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+                    if (jsonData.length > 0) {
+                        // Add this file data to our uploaded files list
+                        const fileInfo = {
+                            name: file.name,
+                            size: file.size,
+                            data: jsonData,
+                            uploadedAt: new Date()
+                        };
+                        
+                        uploadedFilesList.push(fileInfo);
+                        currentFileIndex = uploadedFilesList.length - 1;
+                        
+                        // Merge all file data for BOM calculation
+                        bomDataArray = [];
+                        uploadedFilesList.forEach(function(f) {
+                            bomDataArray = bomDataArray.concat(f.data);
+                        });
+
+                        console.log('Total rows loaded:', bomDataArray.length, 'from', uploadedFilesList.length, 'files');
+                        uploadedFileData = jsonData[0];
+                        
+                        // Set parent part number from the first item in the file (only for first/parent file)
+                        if (uploadedFilesList.length === 1 && jsonData.length > 0) {
+                            const firstItemValue = getValueByCaseInsensitiveKey(jsonData[0], 'Item');
+                            if (firstItemValue) {
+                                parentPartNumberFromFile = String(firstItemValue);
+                                console.log('Parent part number set to:', parentPartNumberFromFile);
+                            }
+                        }
+
+                        const missingAttrs = checkMissingAttributes(jsonData);
+                        if (missingAttrs.length > 0) {
+                            console.log('Missing attributes found:', missingAttrs);
+                            showMissingDetailsModal(missingAttrs, jsonData, file.name);
+                        } else {
+                            handleSuccessfulUpload();
+                        }
+                        
+                        // Update the UI
+                        updateFileListUI();
+                        updateFileCount();
+                        
+                    } else {
+                        showSuccessMessage('No data found in the file');
+                    }
+                } catch (error) {
+                    console.error('Error reading file:', error);
+                    showSuccessMessage('Error reading file.');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+        
+        // Update the file list UI
+        function updateFileListUI() {
+            const uploadedFilesContainer = document.getElementById('uploadedFilesContainer');
+            const uploadedFilesListEl = document.getElementById('uploadedFilesList');
+            const addFileBtn = document.getElementById('addFileBtn');
+            
+            if (uploadedFilesList.length > 0) {
+                uploadedFilesContainer.classList.remove('hidden');
+                addFileBtn.classList.remove('hidden');
+                
+                // Build the file list HTML
+                let html = '';
+                uploadedFilesList.forEach(function(file, index) {
+                    const isActive = index === currentFileIndex ? 'active' : '';
+                    html += '<div class="uploaded-file-item ' + isActive + '" data-index="' + index + '">';
+                    html += '<div class="uploaded-file-info">';
+                    html += '<div class="uploaded-file-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg></div>';
+                    html += '<div class="uploaded-file-details">';
+                    html += '<span class="uploaded-file-name">' + file.name + '</span>';
+                    html += '<span class="uploaded-file-meta">' + file.data.length + ' rows</span>';
+                    html += '</div></div>';
+                    html += '<div class="uploaded-file-actions">';
+                    html += '<button class="file-action-btn delete" data-index="' + index + '" title="Remove file"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>';
+                    html += '</div></div>';
+                });
+                
+                uploadedFilesListEl.innerHTML = html;
+                
+                // Add click handlers for file items and delete buttons
+                document.querySelectorAll('.uploaded-file-item').forEach(function(item) {
+                    item.addEventListener('click', function(e) {
+                        if (!e.target.closest('.file-action-btn')) {
+                            const index = parseInt(this.getAttribute('data-index'));
+                            selectFile(index);
+                        }
+                    });
+                });
+                
+                document.querySelectorAll('.file-action-btn.delete').forEach(function(btn) {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const index = parseInt(this.getAttribute('data-index'));
+                        removeFile(index);
+                    });
+                });
+                
+                // Show add file button if not at limit
+                if (uploadedFilesList.length < MAX_FILES_PER_USER) {
+                    addFileBtn.disabled = false;
+                } else {
+                    addFileBtn.disabled = true;
+                }
+                
+            } else {
+                uploadedFilesContainer.classList.add('hidden');
+                addFileBtn.classList.add('hidden');
+            }
+        }
+        
+        // Update file count display
+        function updateFileCount() {
+            const fileCountText = document.getElementById('fileCountText');
+            const fileCountBadge = document.getElementById('fileCountBadge');
+            
+            fileCountText.textContent = uploadedFilesList.length + '/5 Files';
+            
+            if (uploadedFilesList.length >= MAX_FILES_PER_USER) {
+                fileCountBadge.classList.add('limit-reached');
+            } else {
+                fileCountBadge.classList.remove('limit-reached');
+            }
+        }
+        
+        // Select a file from the list
+        function selectFile(index) {
+            if (index >= 0 && index < uploadedFilesList.length) {
+                currentFileIndex = index;
+                const file = uploadedFilesList[index];
+                bomDataArray = file.data;
+                uploadedFileData = file.data[0];
+                
+                // Update UI
+                updateFileListUI();
+                showSuccessMessage('Switched to file: ' + file.name);
+            }
+        }
+        
+        // Remove a file from the list
+        function removeFile(index) {
+            if (index >= 0 && index < uploadedFilesList.length) {
+                const removedFile = uploadedFilesList[index];
+                uploadedFilesList.splice(index, 1);
+                
+                // Adjust current file index
+                if (currentFileIndex >= uploadedFilesList.length) {
+                    currentFileIndex = uploadedFilesList.length - 1;
+                }
+                
+                // Rebuild bomDataArray from remaining files
+                bomDataArray = [];
+                uploadedFilesList.forEach(function(f) {
+                    bomDataArray = bomDataArray.concat(f.data);
+                });
+                
+                if (currentFileIndex >= 0 && uploadedFilesList.length > 0) {
+                    uploadedFileData = uploadedFilesList[currentFileIndex].data[0];
+                } else {
+                    uploadedFileData = null;
+                }
+                
+                // If all files are removed, reset the UI properly
+                if (uploadedFilesList.length === 0) {
+                    // Clear all file-related displays
+                    fileList.classList.add('hidden');
+                    uploadArea.classList.remove('hidden');
+                    uploadStatus.classList.add('hidden');
+                    bomDataArray = [];
+                    bomData = {};
+                    currentFileIndex = -1;
+                    
+                    // Show Add Another File button so user can add more files
+                    const addFileBtn = document.getElementById('addFileBtn');
+                    if (addFileBtn) {
+                        addFileBtn.classList.remove('hidden');
+                    }
+                }
+                
+                updateFileListUI();
+                updateFileCount();
+                showSuccessMessage('File removed: ' + removedFile.name);
+                
+            }
+        }
+
+        function handleSuccessfulUpload() {
+            // Hide the old single file list (fileList) since we're using multiple files system
+            fileList.classList.add('hidden');
+            uploadArea.classList.add('hidden');
+            uploadStatus.classList.remove('hidden');
+            showSuccessMessage('File uploaded successfully! Please enter a part number to calculate BOM cost.');
+            
+            // Reset file input to allow selecting the same file again
+            fileInput.value = '';
+
+            // Check if there's a pending part number from before upload
+            const pendingPartNumber = localStorage.getItem('pendingPartNumber');
+            
+            // Auto-redirect to BOM Calculator tab - but only show cost if part number was explicitly provided
+            setTimeout(function() {
+                document.querySelector('.nav-tab[data-tab="bom"]').click();
+                if (uploadedFileData) {
+                    bomData = uploadedFileData;
+                    // Only process BOM data if there was a pending part number explicitly entered by user
+                    if (pendingPartNumber) {
+                        currentPartNumber = pendingPartNumber;
+                        partNumberInput.value = pendingPartNumber;
+                        localStorage.removeItem('pendingPartNumber');
+                        // Try to find the part number in the uploaded data
+                        let foundData = null;
+                        for (let i = 0; i < bomDataArray.length; i++) {
+                            const row = bomDataArray[i];
+                            const itemValue = getValueByCaseInsensitiveKey(row, 'Item');
+                            if (itemValue && String(itemValue) === pendingPartNumber) {
+                                foundData = row;
+                                break;
+                            }
+                        }
+                        if (foundData) {
+                            bomData = foundData;
+                            processBOMData();
+                        } else {
+                            showSuccessMessage('Part number not found in uploaded file!');
+                        }
+                    }
+                    // If no pending part number, do NOT auto-calculate - wait for user to enter part number
+                }
+            }, 1000);
+            
+            // Save uploaded data to localStorage for persistence
+            try {
+                localStorage.setItem('bomDataArray', JSON.stringify(bomDataArray));
+                localStorage.setItem('uploadedFilesCount', uploadedFilesList.length.toString());
+            } catch (e) {
+                console.warn('Could not save to localStorage:', e);
+            }
+        }
+
+
+        function resetFileUpload() {
+            fileInput.value = '';
+            fileList.classList.add('hidden');
+            uploadArea.classList.remove('hidden');
+            uploadStatus.classList.add('hidden');
+            uploadedFileData = null;
+            // Don't clear bomDataArray here - data persists
+        }
+
+        removeFileBtn.addEventListener('click', function() {
+            resetFileUpload();
+        });
+
+        // Add Another File button click handler
+        const addFileBtn = document.getElementById('addFileBtn');
+        if (addFileBtn) {
+            addFileBtn.addEventListener('click', function() {
+                // Trigger the hidden file input
+                fileInput.value = ''; // Reset the input to allow selecting the same file again
+                fileInput.click();
+            });
+        }
+
+        downloadTemplateBtn.addEventListener('click', function() {
+            const templateData = REQUIRED_ATTRIBUTES.map(function(attr) {
+                var obj = {};
+                obj[attr] = '';
+                return obj;
+            });
+            const worksheet = XLSX.utils.json_to_sheet(templateData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'BOM Template');
+            XLSX.writeFile(workbook, 'BOM_Template.xlsx');
+            showSuccessMessage('Template downloaded successfully!');
+        });
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function showSuccessMessage(message) {
+            const successMsg = document.getElementById('successMessage');
+            const successText = document.getElementById('successMessageText');
+            successText.textContent = message;
+            successMsg.classList.add('show');
+            setTimeout(function() {
+                successMsg.classList.remove('show');
+            }, 3000);
+        }
+
+        // Missing Attributes Modal Functionality
+        const missingDetailsModal = document.getElementById('missingDetailsModal');
+        const missingAttributesForm = document.getElementById('missingAttributesForm');
+        const cancelMissingDetailsBtn = document.getElementById('cancelMissingDetailsBtn');
+        const submitMissingDetailsBtn = document.getElementById('submitMissingDetailsBtn');
+        let currentMissingAttributes = [];
+        let currentUploadedFileData = null;
+        let currentFileName = '';
+
+        function checkMissingAttributes(jsonData) {
+            if (!jsonData || jsonData.length === 0) return [];
+            const firstRow = jsonData[0];
+            const headers = Object.keys(firstRow).map(function(h) { return h.toLowerCase().trim(); });
+            var missing = [];
+            for (var i = 0; i < REQUIRED_ATTRIBUTES.length; i++) {
+                var attr = REQUIRED_ATTRIBUTES[i];
+                if (headers.indexOf(attr.toLowerCase()) === -1) {
+                    missing.push(attr);
+                }
+            }
+            return missing;
+        }
+
+        function showMissingDetailsModal(missingAttributes, fileData, fileName) {
+            currentMissingAttributes = missingAttributes;
+            currentUploadedFileData = fileData;
+            currentFileName = fileName;
+            missingAttributesForm.innerHTML = '';
+
+            for (var i = 0; i < missingAttributes.length; i++) {
+                var attr = missingAttributes[i];
+                var isCurrency = attr.toLowerCase() === 'currency';
+                var isQuantity = attr.toLowerCase() === 'quantity';
+                var inputHtml = '';
+
+                if (isCurrency) {
+                    inputHtml = '<select id="missing_' + attr.replace(/\s+/g, '_') + '" required><option value="">Select Currency</option><option value="INR">INR - Indian Rupee</option><option value="USD">USD - US Dollar</option><option value="EUR">EUR - Euro</option><option value="GBP">GBP - British Pound</option></select>';
+                } else if (isQuantity) {
+                    inputHtml = '<input type="number" id="missing_' + attr.replace(/\s+/g, '_') + '" placeholder="Enter ' + attr + '" min="1" value="1" required>';
+                } else {
+                    inputHtml = '<input type="text" id="missing_' + attr.replace(/\s+/g, '_') + '" placeholder="Enter ' + attr + '" required>';
+                }
+
+                missingAttributesForm.innerHTML += '<div class="attribute-input-group"><label for="missing_' + attr.replace(/\s+/g, '_') + '">' + attr + ' <span>*</span></label>' + inputHtml + '</div>';
+            }
+
+            missingDetailsModal.classList.add('show');
+        }
+
+        function hideMissingDetailsModal() {
+            missingDetailsModal.classList.remove('show');
+            currentMissingAttributes = [];
+            currentUploadedFileData = null;
+        }
+
+        cancelMissingDetailsBtn.addEventListener('click', function() {
+            hideMissingDetailsModal();
+            
+            // Remove the last uploaded file from the list since user cancelled
+            if (uploadedFilesList.length > 0 && currentFileIndex === uploadedFilesList.length - 1) {
+                uploadedFilesList.pop();
+                currentFileIndex = uploadedFilesList.length - 1;
+                
+                // Rebuild bomDataArray from remaining files
+                bomDataArray = [];
+                uploadedFilesList.forEach(function(f) {
+                    bomDataArray = bomDataArray.concat(f.data);
+                });
+                
+                if (currentFileIndex >= 0 && uploadedFilesList.length > 0) {
+                    uploadedFileData = uploadedFilesList[currentFileIndex].data[0];
+                } else {
+                    uploadedFileData = null;
+                }
+                
+                // If all files are removed, show upload area
+                if (uploadedFilesList.length === 0) {
+                    fileList.classList.add('hidden');
+                    uploadArea.classList.remove('hidden');
+                    uploadStatus.classList.add('hidden');
+                    bomDataArray = [];
+                    bomData = {};
+                    currentFileIndex = -1;
+                }
+                
+                updateFileListUI();
+                updateFileCount();
+            }
+            
+            resetFileUpload();
+        });
+
+        submitMissingDetailsBtn.addEventListener('click', async function() {
+            var missingValues = {};
+            var isValid = true;
+
+            for (var i = 0; i < currentMissingAttributes.length; i++) {
+                var attr = currentMissingAttributes[i];
+                var inputId = 'missing_' + attr.replace(/\s+/g, '_');
+                var input = document.getElementById(inputId);
+
+                if (input && input.value.trim() === '') {
+                    input.classList.add('error');
+                    isValid = false;
+                } else if (input) {
+                    input.classList.remove('error');
+                    missingValues[attr] = input.value.trim();
+                }
+            }
+
+            if (!isValid) {
+                showSuccessMessage('Please fill all required fields');
+                return;
+            }
+
+            var fileDataWithMissing = currentUploadedFileData.map(function(row) {
+                var newRow = {};
+                for (var key in row) {
+                    newRow[key] = row[key];
+                }
+                for (var mkey in missingValues) {
+                    newRow[mkey] = missingValues[mkey];
+                }
+                return newRow;
+            });
+
+            var token = localStorage.getItem('token');
+            try {
+                var response = await fetch(API_BASE_URL + '/bom/save-with-missing', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json', 
+                        'Authorization': 'Bearer ' + token 
+                    },
+                    body: JSON.stringify({ 
+                        fileData: fileDataWithMissing, 
+                        missingAttributes: missingValues, 
+                        originalFileName: currentFileName 
+                    })
+                });
+                var result = await response.json();
+                if (response.ok) {
+                    hideMissingDetailsModal();
+                    bomDataArray = fileDataWithMissing;
+                    uploadedFileData = fileDataWithMissing[0];
+                    bomData = {};
+                    for (var key in uploadedFileData) {
+                        bomData[key] = uploadedFileData[key];
+                    }
+                    for (var mkey in missingValues) {
+                        bomData[mkey] = missingValues[mkey];
+                    }
+                    fileList.classList.add('hidden');
+                    uploadArea.classList.remove('hidden');
+                    uploadStatus.classList.remove('hidden');
+                    showSuccessMessage('File uploaded successfully with provided details!');
+
+                    // Auto-redirect to BOM Calculator tab after successful upload
+                    setTimeout(function() {
+                        document.querySelector('.nav-tab[data-tab="bom"]').click();
+                        if (missingValues['Item']) {
+                            currentPartNumber = missingValues['Item'];
+                            partNumberInput.value = currentPartNumber;
+                            processBOMData();
+                        }
+                    }, 1000);
+                } else {
+                    showSuccessMessage(result.message || 'Error saving data');
+                }
+            } catch (error) {
+                console.error('Error saving missing attributes:', error);
+                showSuccessMessage('Error saving data. Please try again.');
+            }
+        });
+    </script>
+</body>
+</html>

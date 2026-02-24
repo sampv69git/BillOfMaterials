@@ -1,0 +1,13 @@
+# Server Configuration
+PORT=5000
+
+# MongoDB Configuration
+# Test server - replace with your test server URL
+MONGODB_URI=mongodb://testserver:27017/bom_calculator_test
+
+# JWT Configuration
+JWT_SECRET=test-secret-key-change-before-production
+JWT_EXPIRE=7d
+
+# Node Environment
+NODE_ENV=test
